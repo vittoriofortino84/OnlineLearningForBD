@@ -1,7 +1,8 @@
 from statistics import mean
 
 import sklearn
-from sksurv.linear_model import CoxPHSurvivalAnalysis
+
+from cox_model import CoxModel
 
 
 def create_folds(x, y, n_folds: int = 10, seed=4985):
@@ -15,13 +16,13 @@ def create_folds(x, y, n_folds: int = 10, seed=4985):
     return res
 
 
-def train_test_one_fold(x_train, y_train, x_test, y_test, alpha=0):
-    estimator = CoxPHSurvivalAnalysis(alpha=alpha).fit(x_train, y_train)
-    score = estimator.score(x_test, y_test)
+def train_test_one_fold(x_train, y_train, x_test, y_test, model: CoxModel, alpha=0):
+    predictor = model.fit_estimator(x_train=x_train, y_train=y_train, alpha=alpha)
+    score = predictor.score(x_test=x_test, y_test=y_test)
     return score
 
 
-def cross_validate(x, y, n_folds: int = 10, alpha=0, seed=78245):
+def cross_validate(x, y, model: CoxModel, n_folds: int = 10, alpha=0, seed=78245):
     folds = create_folds(x, y, n_folds=n_folds, seed=seed)
     scores = []
     for train_index, test_index in folds:
@@ -29,6 +30,6 @@ def cross_validate(x, y, n_folds: int = 10, alpha=0, seed=78245):
         x_test = x.iloc[test_index]
         y_train = y[train_index]
         y_test = y[test_index]
-        fold_score = train_test_one_fold(x_train, y_train, x_test, y_test, alpha)
+        fold_score = train_test_one_fold(x_train, y_train, x_test, y_test, model=model, alpha=alpha)
         scores.append(fold_score)
     return mean(scores)

@@ -3,7 +3,13 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sksurv.linear_model import CoxPHSurvivalAnalysis
 
-from utils import cross_validate
+from consts import EVENT_STR, TIME_STR
+from cox_model import LifelinesCoxModel
+from folds_utils import cross_validate
+
+
+MODEL = LifelinesCoxModel()
+
 
 data = pd.read_csv('sw_breast_gdat_2.csv')
 data = data.drop('Unnamed: 0', axis=1, errors='ignore')
@@ -36,7 +42,8 @@ pam50sig = ["ACTR3B","ANLN","BAG1","BCL2","BIRC5","BLVRA","CCNB1","CCNE1","CDC20
             "SLC39A6","TMEM45B","TYMS","UBE2C","UBE2T", "ORC6L", "KNTC2", "CDCA1"]
 # The list contains also 'ORC6L', 'KNTC2', 'CDCA1'
 
-all_feats = ['DNAJC12', 'ABCC8', 'CKAP2L', 'CDC25A', 'CDCA3', 'KLK6', 'SOX11', 'C5orf30', 'FOXA1', 'NUDT12', 'SKA3',
+feats_from_online = [
+             'DNAJC12', 'ABCC8', 'CKAP2L', 'CDC25A', 'CDCA3', 'KLK6', 'SOX11', 'C5orf30', 'FOXA1', 'NUDT12', 'SKA3',
              'CLSPN', 'CENPI', 'FOXC1', 'HAPLN3', 'KRT14', 'DEPDC1', 'SKA1', 'TPX2', 'MKI67', 'SERPINA11', 'ARSG',
              'MPP6', 'ASPM', 'CMBL', 'ANKRA2', 'CDCA2', 'LRRC48', 'GATA3', 'TCEAL1', 'NDC80', 'ZNF695', 'MICALL1',
              'PLEKHG1', 'APH1B', 'RRM2', 'CEP55', 'MAPT', 'YBX1', 'DIAPH3', 'ROPN1B', 'KIF18A', 'KRT16', 'GABRP',
@@ -60,21 +67,31 @@ all_feats = ['DNAJC12', 'ABCC8', 'CKAP2L', 'CDC25A', 'CDCA3', 'KLK6', 'SOX11', '
              'SHCBP1', 'MAD2L1', 'HJURP', 'IGF1R', 'THSD4', 'CKS1B', 'CDCA8', 'LONRF2', 'PPP1R14C', 'RAD51AP1',
              'SLC7A13', 'APOBEC3B']
 
-selected_data = data.loc[:, [c in all_feats for c in data.columns.values.tolist()]]
+all_feats = list(set(pam50sig + feats_from_online) & set(data.columns.values.tolist()))
+
+print("all_feats: " + str(all_feats))
+
+data = data[all_feats]
+
+print("shape before dropping na: " + str(data.shape))
+data = data.dropna()
+print("shape after dropping na: " + str(data.shape))
+
+selected_data = data.loc[:, [c in feats_from_online for c in data.columns.values.tolist()]]
 pam_50_data = data.loc[:, [c in pam50sig for c in data.columns.values.tolist()]]
 
 y_cox = []
 for index, row in pheno.iterrows():
     y_cox.append((row['OverallSurv'], row['SurvDays']))
-y_cox = np.array(y_cox, dtype=[('event', bool), ('time', int)])
+y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
 
 estimator_selected = CoxPHSurvivalAnalysis().fit(selected_data, y_cox)
 estimator_pam50 = CoxPHSurvivalAnalysis().fit(pam_50_data, y_cox)
 
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))
-    selected_score = cross_validate(x=selected_data, y=y_cox, n_folds=10, alpha=a)
+    selected_score = cross_validate(x=selected_data, y=y_cox, model=MODEL, n_folds=10, alpha=a)
     print("selected score: " + str(selected_score))
-    pam50_score = cross_validate(x=pam_50_data, y=y_cox, n_folds=10, alpha=a)
+    pam50_score = cross_validate(x=pam_50_data, y=y_cox, model=MODEL, n_folds=10, alpha=a)
     print("pam50 score: " + str(pam50_score))
 
