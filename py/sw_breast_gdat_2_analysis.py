@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sksurv.linear_model import CoxPHSurvivalAnalysis
 
 from consts import EVENT_STR, TIME_STR
 from cox_model import LifelinesCoxModel
@@ -9,32 +8,6 @@ from folds_utils import cross_validate
 
 
 MODEL = LifelinesCoxModel()
-
-
-data = pd.read_csv('sw_breast_gdat_2.csv')
-data = data.drop('Unnamed: 0', axis=1, errors='ignore')
-
-pheno = pd.read_csv('sw_breast_pheno.csv')
-pheno = pheno.drop('Unnamed: 0', axis=1, errors='ignore')
-
-pam50 = data['pam50']
-data = data.drop('pam50', axis=1, errors='ignore')
-
-class2idx = {
-    'LumA':0,
-    'LumB':1,
-    'Her2':2,
-    'Basal':3,
-    'Normal':4
-}
-
-idx2class = {v: k for k, v in class2idx.items()}
-
-# replacing labels
-pam50.replace(class2idx, inplace=True)
-
-scaler = StandardScaler()
-data[data.columns] = scaler.fit_transform(data[data.columns])
 
 pam50sig = ["ACTR3B","ANLN","BAG1","BCL2","BIRC5","BLVRA","CCNB1","CCNE1","CDC20","CDC6","CDH3","CENPF","CEP55","CXXC5",
             "EGFR","ERBB2","ESR1","EXO1","FGFR4","FOXA1","FOXC1","GPR160","GRB7","KIF2C","KRT14","KRT17","KRT5","MAPT",
@@ -67,11 +40,36 @@ feats_from_online = [
              'SHCBP1', 'MAD2L1', 'HJURP', 'IGF1R', 'THSD4', 'CKS1B', 'CDCA8', 'LONRF2', 'PPP1R14C', 'RAD51AP1',
              'SLC7A13', 'APOBEC3B']
 
+data = pd.read_csv('sw_breast_gdat_2.csv')
+data = data.drop('Unnamed: 0', axis=1, errors='ignore')
+
+pheno = pd.read_csv('sw_breast_pheno.csv')
+pheno = pheno.drop('Unnamed: 0', axis=1, errors='ignore')
+
+pam50 = data['pam50']
+data = data.drop('pam50', axis=1, errors='ignore')
+
+class2idx = {
+    'LumA':0,
+    'LumB':1,
+    'Her2':2,
+    'Basal':3,
+    'Normal':4
+}
+
+idx2class = {v: k for k, v in class2idx.items()}
+
+# replacing labels
+pam50.replace(class2idx, inplace=True)
+
 all_feats = list(set(pam50sig + feats_from_online) & set(data.columns.values.tolist()))
 
 print("all_feats: " + str(all_feats))
 
 data = data[all_feats]
+
+scaler = StandardScaler()
+data[data.columns] = scaler.fit_transform(data[data.columns])
 
 print("shape before dropping na: " + str(data.shape))
 data = data.dropna()
@@ -84,9 +82,6 @@ y_cox = []
 for index, row in pheno.iterrows():
     y_cox.append((row['OverallSurv'], row['SurvDays']))
 y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
-
-estimator_selected = CoxPHSurvivalAnalysis().fit(selected_data, y_cox)
-estimator_pam50 = CoxPHSurvivalAnalysis().fit(pam_50_data, y_cox)
 
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))
