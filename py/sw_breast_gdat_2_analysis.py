@@ -8,6 +8,7 @@ from folds_utils import cross_validate
 
 
 MODEL = LifelinesCoxModel()
+Y_AS_DF = True  # Otherwise it is a numpy array of tuples.
 
 pam50sig = ["ACTR3B","ANLN","BAG1","BCL2","BIRC5","BLVRA","CCNB1","CCNE1","CDC20","CDC6","CDH3","CENPF","CEP55","CXXC5",
             "EGFR","ERBB2","ESR1","EXO1","FGFR4","FOXA1","FOXC1","GPR160","GRB7","KIF2C","KRT14","KRT17","KRT5","MAPT",
@@ -49,18 +50,19 @@ pheno = pheno.drop('Unnamed: 0', axis=1, errors='ignore')
 pam50 = data['pam50']
 data = data.drop('pam50', axis=1, errors='ignore')
 
-class2idx = {
-    'LumA':0,
-    'LumB':1,
-    'Her2':2,
-    'Basal':3,
-    'Normal':4
-}
+if False:  # Not used at the moment.
+    class2idx = {
+        'LumA':0,
+        'LumB':1,
+        'Her2':2,
+        'Basal':3,
+        'Normal':4
+    }
 
-idx2class = {v: k for k, v in class2idx.items()}
+    idx2class = {v: k for k, v in class2idx.items()}
 
-# replacing labels
-pam50.replace(class2idx, inplace=True)
+    # replacing labels
+    pam50.replace(class2idx, inplace=True)
 
 all_feats = list(set(pam50sig + feats_from_online) & set(data.columns.values.tolist()))
 
@@ -78,10 +80,14 @@ print("shape after dropping na: " + str(data.shape))
 selected_data = data.loc[:, [c in feats_from_online for c in data.columns.values.tolist()]]
 pam_50_data = data.loc[:, [c in pam50sig for c in data.columns.values.tolist()]]
 
-y_cox = []
-for index, row in pheno.iterrows():
-    y_cox.append((row['OverallSurv'], row['SurvDays']))
-y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
+if Y_AS_DF:
+    y_cox = pheno[['OverallSurv', 'SurvDays']]
+    y_cox.columns = [EVENT_STR, TIME_STR]
+else:
+    y_cox = []
+    for index, row in pheno.iterrows():
+        y_cox.append((row['OverallSurv'], row['SurvDays']))
+    y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
 
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))

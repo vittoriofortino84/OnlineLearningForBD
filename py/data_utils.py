@@ -6,5 +6,6 @@ from consts import EVENT_STR, TIME_STR
 def merge_x_y(x, y):
     events = pd.Series(y[:][EVENT_STR], name=EVENT_STR)
     times = pd.Series(y[:][TIME_STR], name=TIME_STR)
-    return pd.concat([x, events, times], axis=1)
+    res = pd.concat([x, events, times], axis=1)
+    return res
 

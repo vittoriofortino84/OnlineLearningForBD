@@ -55,6 +55,5 @@ class LifelinesCoxModel(CoxModel):
 
     def fit_estimator(self, x_train, y_train, alpha: float = 0) -> CoxPredictor:
         df = LifelinesCoxPredictor.merge_x_y(x=x_train, y=y_train)
-        print(df.isna().any())
         estimator = CoxPHFitter(penalizer=alpha, l1_ratio=0).fit(df=df, duration_col='time', event_col='event')
         return LifelinesCoxPredictor(estimator)
