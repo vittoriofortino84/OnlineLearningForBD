@@ -95,7 +95,7 @@ print(uni_res.to_string())
 
 print(pheno.head().to_string())
 
-pheno_covariates = pheno[['Age', 'NodeSize']]
+pheno_covariates = pheno[['Age']]
 print(pheno_covariates.isna().any())
 uni_cov_res = univariate_analysis_with_covariates(x=selected_data, y=y_cox, cov=pheno_covariates, model=MODEL)
 print(uni_cov_res.to_string())
