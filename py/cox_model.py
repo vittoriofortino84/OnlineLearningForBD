@@ -8,7 +8,12 @@ from data_utils import merge_x_y
 
 class CoxPredictor(ABC):
 
+    @abstractmethod
     def score(self, x_test, y_test) -> float:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def p_vals(self):
         raise NotImplementedError()
 
 
@@ -20,6 +25,7 @@ class CoxModel(ABC):
 
 
 class SKSurvCoxPredictor(CoxPredictor):
+
     __estimator: CoxPHSurvivalAnalysis
 
     def __init__(self, estimator: CoxPHSurvivalAnalysis):
@@ -27,6 +33,9 @@ class SKSurvCoxPredictor(CoxPredictor):
 
     def score(self, x_test, y_test) -> float:
         return self.__estimator.score(x_test, y_test)
+
+    def p_vals(self):
+        raise NotImplementedError()
 
 
 class SKSurvCoxModel(CoxModel):
@@ -49,6 +58,10 @@ class LifelinesCoxPredictor(CoxPredictor):
     def score(self, x_test, y_test) -> float:
         df = self.merge_x_y(x=x_test, y=y_test)
         return self.__estimator.score(df, scoring_method="concordance_index")
+
+    def p_vals(self):
+        summary = self.__estimator.summary
+        return summary['p']
 
 
 class LifelinesCoxModel(CoxModel):

@@ -18,6 +18,7 @@ def create_folds(x, y, n_folds: int = 10, seed=4985):
 def train_test_one_fold(x_train, y_train, x_test, y_test, model: CoxModel, alpha=0):
     predictor = model.fit_estimator(x_train=x_train, y_train=y_train, alpha=alpha)
     score = predictor.score(x_test=x_test, y_test=y_test)
+    predictor.p_vals()
     return score
 
 
