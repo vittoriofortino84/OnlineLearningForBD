@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from consts import EVENT_STR, TIME_STR
 from cox_model import LifelinesCoxModel
 from folds_utils import cross_validate
+from univariate_analysis import univariate_analysis, univariate_analysis_with_covariates
 
 
 MODEL = LifelinesCoxModel()
@@ -88,6 +89,16 @@ else:
     for index, row in pheno.iterrows():
         y_cox.append((row['OverallSurv'], row['SurvDays']))
     y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
+
+uni_res = univariate_analysis(x=selected_data, y=y_cox, model=MODEL)
+print(uni_res.to_string())
+
+print(pheno.head().to_string())
+
+pheno_covariates = pheno[['Age', 'NodeSize']]
+print(pheno_covariates.isna().any())
+uni_cov_res = univariate_analysis_with_covariates(x=selected_data, y=y_cox, cov=pheno_covariates, model=MODEL)
+print(uni_cov_res.to_string())
 
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))
