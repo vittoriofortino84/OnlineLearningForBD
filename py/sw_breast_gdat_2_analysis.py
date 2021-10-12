@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -5,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from consts import EVENT_STR, TIME_STR
 from cox_model import LifelinesCoxModel
 from folds_utils import cross_validate
+from risk_score import RSPrognosticFitter, prognostic_coefficients
+from risk_score_cox_model import RiskScoreCoxModel
 from univariate_analysis import univariate_analysis, univariate_analysis_with_covariates
 
 
@@ -51,20 +54,6 @@ pheno = pheno.drop('Unnamed: 0', axis=1, errors='ignore')
 pam50 = data['pam50']
 data = data.drop('pam50', axis=1, errors='ignore')
 
-if False:  # Not used at the moment.
-    class2idx = {
-        'LumA':0,
-        'LumB':1,
-        'Her2':2,
-        'Basal':3,
-        'Normal':4
-    }
-
-    idx2class = {v: k for k, v in class2idx.items()}
-
-    # replacing labels
-    pam50.replace(class2idx, inplace=True)
-
 all_feats = list(set(pam50sig + feats_from_online) & set(data.columns.values.tolist()))
 
 print("all_feats: " + str(all_feats))
@@ -99,6 +88,27 @@ pheno_covariates = pheno[['Age']]
 print(pheno_covariates.isna().any())
 uni_cov_res = univariate_analysis_with_covariates(x=selected_data, y=y_cox, cov=pheno_covariates, model=MODEL)
 print(uni_cov_res.to_string())
+
+coeffs = prognostic_coefficients(selected_data, y_cox)
+print("prognostic coefficients")
+print(str(coeffs))
+
+plt.hist(list(coeffs.values()))
+
+rs_prognostic_fitter = RSPrognosticFitter()
+rs_prognostic_classifier = rs_prognostic_fitter.fit(x_train=selected_data, y_train=y_cox)
+rs_classes = rs_prognostic_classifier.predict(x=selected_data)
+print("classes from risk scores")
+df_classes = pd.DataFrame()
+df_classes["risk_group"] = rs_classes
+
+rs_res = univariate_analysis(x=df_classes, y=y_cox, model=MODEL)
+print("Risk score results")
+print(rs_res.to_string())
+
+rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
+print("Risk score model cross validation mean score")
+print(str(rs_cv_score))
 
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))
