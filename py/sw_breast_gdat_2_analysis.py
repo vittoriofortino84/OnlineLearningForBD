@@ -116,7 +116,7 @@ plt.hist(list(progn_coefficients.values()))
 rs_prognostic_fitter = RSPrognosticFitter()
 rs_prognostic_classifier = rs_prognostic_fitter.fit(x_train=selected_data, y_train=y_cox)
 rs_classes = rs_prognostic_classifier.predict(x=selected_data)
-print("classes from risk scores")
+print("Classes from risk scores (True for lower risk)")
 df_classes = pd.DataFrame()
 df_classes["risk_group"] = rs_classes
 print(df_classes)
@@ -126,7 +126,8 @@ print("Risk score results (results of univariate analysis on a predictive model 
 print(rs_res.to_string())
 
 rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
-print("Risk score model cross validation mean score")
+print("Risk score model cross validation mean c-statistic")
+print("In each fold the model is computed using the results of univariate models on all features... might take a while...")
 print(str(rs_cv_score))
 
 print("CROSS_VALIDATION OF COX MODELS WITH FEATURES FROM ON-LINE LEARNING VS PAM50 WITH DIFFERENT ALPHA VALUES")
