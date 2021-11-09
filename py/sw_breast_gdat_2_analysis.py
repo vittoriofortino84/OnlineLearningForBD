@@ -126,7 +126,7 @@ print("Risk score results (results of univariate analysis on a predictive model 
 print(rs_res.to_string())
 
 print("Risk score model cross validation mean c-statistic")
-print("In each fold the model is computed using the results of univariate models on all features... might take a while...")
+print("In each fold the model is computed using the results of univariate models on all features... might take a while... (5/10 minutes?)")
 rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
 print(str(rs_cv_score))
 
