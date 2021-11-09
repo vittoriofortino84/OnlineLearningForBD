@@ -125,9 +125,9 @@ rs_res = univariate_analysis(x=df_classes, y=y_cox, model=MODEL)
 print("Risk score results (results of univariate analysis on a predictive model using the classes from risk scores)")
 print(rs_res.to_string())
 
-rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
 print("Risk score model cross validation mean c-statistic")
 print("In each fold the model is computed using the results of univariate models on all features... might take a while...")
+rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
 print(str(rs_cv_score))
 
 print("CROSS_VALIDATION OF COX MODELS WITH FEATURES FROM ON-LINE LEARNING VS PAM50 WITH DIFFERENT ALPHA VALUES")
