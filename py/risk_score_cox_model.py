@@ -7,6 +7,7 @@ from risk_score import RSPrognosticClassifier, risk_scores, prognostic_coefficie
 
 
 class RiskScoreCoxPredictor(CoxPredictor):
+
     __rs_prognostic_classifier: RSPrognosticClassifier
     __lifelines_predictor: LifelinesCoxPredictor
 
@@ -21,8 +22,10 @@ class RiskScoreCoxPredictor(CoxPredictor):
         return self.__lifelines_predictor.score(x_test=df_classes, y_test=y_test)
 
     def p_vals(self):
-        summary = self.__lifelines_predictor.summary
-        return summary['p']
+        return self.__lifelines_predictor.p_vals()
+
+    def params(self):
+        return self.__lifelines_predictor.params()
 
 
 class RiskScoreCoxModel(CoxModel):

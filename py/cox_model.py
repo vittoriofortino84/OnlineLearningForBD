@@ -15,6 +15,10 @@ class CoxPredictor(ABC):
     def p_vals(self):
         raise NotImplementedError()
 
+    @abstractmethod
+    def params(self):
+        raise NotImplementedError()
+
 
 class CoxModel(ABC):
 
@@ -34,6 +38,9 @@ class SKSurvCoxPredictor(CoxPredictor):
         return self.__estimator.score(x_test, y_test)
 
     def p_vals(self):
+        raise NotImplementedError()
+
+    def params(self):
         raise NotImplementedError()
 
 
@@ -62,12 +69,16 @@ class LifelinesCoxPredictor(CoxPredictor):
         summary = self.__estimator.summary
         return summary['p']
 
+    def params(self):
+        return self.__estimator.params_
+
 
 class LifelinesCoxModel(CoxModel):
 
     def fit_estimator(self, x_train, y_train, alpha: float = 0) -> CoxPredictor:
         df = LifelinesCoxPredictor.merge_x_y(x=x_train, y=y_train)
         if df.isnull().values.any():
+            print("Nulls detected in the dataframe")
             print(df.isnull())
         estimator = CoxPHFitter(penalizer=alpha, l1_ratio=0).fit(df=df, duration_col='time', event_col='event')
         return LifelinesCoxPredictor(estimator)

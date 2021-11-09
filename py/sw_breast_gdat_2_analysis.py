@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from consts import EVENT_STR, TIME_STR
 from cox_model import LifelinesCoxModel
 from folds_utils import cross_validate
-from risk_score import RSPrognosticFitter, prognostic_coefficients
+from risk_score import RSPrognosticFitter, prognostic_coefficients, prognostic_scores
 from risk_score_cox_model import RiskScoreCoxModel
 from univariate_analysis import univariate_analysis, univariate_analysis_with_covariates
 
@@ -45,6 +45,8 @@ feats_from_online = [
              'SHCBP1', 'MAD2L1', 'HJURP', 'IGF1R', 'THSD4', 'CKS1B', 'CDCA8', 'LONRF2', 'PPP1R14C', 'RAD51AP1',
              'SLC7A13', 'APOBEC3B']
 
+print("Reading data from csv.")
+
 data = pd.read_csv('sw_breast_gdat_2.csv')
 data = data.drop('Unnamed: 0', axis=1, errors='ignore')
 
@@ -80,36 +82,56 @@ else:
     y_cox = np.array(y_cox, dtype=[(EVENT_STR, bool), (TIME_STR, int)])
 
 uni_res = univariate_analysis(x=selected_data, y=y_cox, model=MODEL)
+print("UNIVARIATE ANALYSIS")
+print("Cox regressions with just one features. The score is the c-statistic.")
 print(uni_res.to_string())
 
+print("HEAD OF PHENOTIPIC DATA")
 print(pheno.head().to_string())
 
-pheno_covariates = pheno[['Age']]
+COVARIATES = ['Age']
+print("Covariates: " + str(COVARIATES))
+pheno_covariates = pheno[COVARIATES]
+print("CHECK FOR NA IN COVARIATES")
 print(pheno_covariates.isna().any())
 uni_cov_res = univariate_analysis_with_covariates(x=selected_data, y=y_cox, cov=pheno_covariates, model=MODEL)
+print("UNIVARIATE ANALYSIS WITH COVARIATES")
+print("Cox regressions with just one feature and the covariates. The score is the c-statistic.")
 print(uni_cov_res.to_string())
 
-coeffs = prognostic_coefficients(selected_data, y_cox)
-print("prognostic coefficients")
-print(str(coeffs))
+progn_scores = prognostic_scores(selected_data, y_cox)
+print("Prognostic scores (c-statistics of features having p-val less than 0.05 in univariate cox regression)")
+print(str(progn_scores))
 
-plt.hist(list(coeffs.values()))
+print("Histogram of c-statistics of prognostic features")
+plt.hist(list(progn_scores.values()))
+
+progn_coefficients = prognostic_coefficients(selected_data, y_cox)
+print("Prognostic coefficients (coefficients of features having p-val less than 0.05 in univariate cox regression)")
+print(str(progn_coefficients))
+
+print("Histogram of coefficients of prognostic features")
+plt.hist(list(progn_coefficients.values()))
 
 rs_prognostic_fitter = RSPrognosticFitter()
 rs_prognostic_classifier = rs_prognostic_fitter.fit(x_train=selected_data, y_train=y_cox)
 rs_classes = rs_prognostic_classifier.predict(x=selected_data)
-print("classes from risk scores")
+print("Classes from risk scores (True for lower risk)")
 df_classes = pd.DataFrame()
 df_classes["risk_group"] = rs_classes
+print(df_classes)
 
 rs_res = univariate_analysis(x=df_classes, y=y_cox, model=MODEL)
-print("Risk score results")
+print("Risk score results (results of univariate analysis on a predictive model using the classes from risk scores)")
 print(rs_res.to_string())
 
+print("Risk score model cross validation mean c-statistic")
+print("In each fold the model is computed using the results of univariate models on all features... might take a while...")
 rs_cv_score = cross_validate(x=selected_data, y=y_cox, model=RiskScoreCoxModel(), n_folds=10)
-print("Risk score model cross validation mean score")
 print(str(rs_cv_score))
 
+print("CROSS_VALIDATION OF COX MODELS WITH FEATURES FROM ON-LINE LEARNING VS PAM50 WITH DIFFERENT ALPHA VALUES")
+print("The scores are cross-validated c-statistics.")
 for a in [0, 0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000]:
     print("alpha: " + str(a))
     selected_score = cross_validate(x=selected_data, y=y_cox, model=MODEL, n_folds=10, alpha=a)
