@@ -1,4 +1,15 @@
+from lifelines import CoxPHFitter
 from matplotlib import pyplot as plt
+
+
+def show_fitted(fitted_model: CoxPHFitter):
+    fitted_model.plot()
+    plt.show()
+
+
+def show_survival_function(fitted_model: CoxPHFitter, x):
+    fitted_model.predict_survival_function(x).plot()
+    plt.show()
 
 
 def show_cumulative_hazard_functions(estimator, X, num_rows=10):

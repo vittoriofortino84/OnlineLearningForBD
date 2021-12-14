@@ -1,6 +1,7 @@
 from statistics import mean
 
 import sklearn
+import sklearn.model_selection
 
 from consts import EVENT_STR
 from cox_model import CoxModel

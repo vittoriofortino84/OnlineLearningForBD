@@ -1,8 +1,12 @@
 from abc import abstractmethod, ABC
+
+import matplotlib
 from lifelines import CoxPHFitter
-from sksurv.linear_model import CoxPHSurvivalAnalysis
+# from sksurv.linear_model import CoxPHSurvivalAnalysis
+from matplotlib import pyplot as plt
 
 from data_utils import merge_x_y
+from py.cox_plots import show_cumulative_hazard_functions
 
 
 class CoxPredictor(ABC):
@@ -27,28 +31,28 @@ class CoxModel(ABC):
         raise NotImplementedError()
 
 
-class SKSurvCoxPredictor(CoxPredictor):
-
-    __estimator: CoxPHSurvivalAnalysis
-
-    def __init__(self, estimator: CoxPHSurvivalAnalysis):
-        self.__estimator = estimator
-
-    def score(self, x_test, y_test) -> float:
-        return self.__estimator.score(x_test, y_test)
-
-    def p_vals(self):
-        raise NotImplementedError()
-
-    def params(self):
-        raise NotImplementedError()
-
-
-class SKSurvCoxModel(CoxModel):
-
-    def fit_estimator(self, x_train, y_train, alpha: float = 0) -> CoxPredictor:
-        estimator = CoxPHSurvivalAnalysis(alpha=alpha).fit(x_train, y_train)
-        return SKSurvCoxPredictor(estimator)
+# class SKSurvCoxPredictor(CoxPredictor):
+#
+#     __estimator: CoxPHSurvivalAnalysis
+#
+#     def __init__(self, estimator: CoxPHSurvivalAnalysis):
+#         self.__estimator = estimator
+#
+#     def score(self, x_test, y_test) -> float:
+#         return self.__estimator.score(x_test, y_test)
+#
+#     def p_vals(self):
+#         raise NotImplementedError()
+#
+#     def params(self):
+#         raise NotImplementedError()
+#
+#
+# class SKSurvCoxModel(CoxModel):
+#
+#     def fit_estimator(self, x_train, y_train, alpha: float = 0) -> CoxPredictor:
+#         estimator = CoxPHSurvivalAnalysis(alpha=alpha).fit(x_train, y_train)
+#         return SKSurvCoxPredictor(estimator)
 
 
 class LifelinesCoxPredictor(CoxPredictor):
