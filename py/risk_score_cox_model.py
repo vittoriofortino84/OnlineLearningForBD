@@ -27,6 +27,12 @@ class RiskScoreCoxPredictor(CoxPredictor):
     def params(self):
         return self.__lifelines_predictor.params()
 
+    def inner_classifier(self) -> RSPrognosticClassifier:
+        return self.__rs_prognostic_classifier
+
+    def inner_predictor(self) -> LifelinesCoxPredictor:
+        return self.__lifelines_predictor
+
 
 class RiskScoreCoxModel(CoxModel):
     __p_val: float
