@@ -76,6 +76,9 @@ class LifelinesCoxPredictor(CoxPredictor):
     def params(self):
         return self.__estimator.params_
 
+    def inner_estimator(self) -> CoxPHFitter:
+        return self.__estimator
+
 
 class LifelinesCoxModel(CoxModel):
 
