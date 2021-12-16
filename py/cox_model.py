@@ -1,12 +1,9 @@
 from abc import abstractmethod, ABC
 
-import matplotlib
 from lifelines import CoxPHFitter
 # from sksurv.linear_model import CoxPHSurvivalAnalysis
-from matplotlib import pyplot as plt
 
 from data_utils import merge_x_y
-from py.cox_plots import show_cumulative_hazard_functions
 
 
 class CoxPredictor(ABC):
